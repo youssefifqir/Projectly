@@ -36,7 +36,7 @@ app:
     phone: "+0000000000"
   email:
     enabled: ${EMAIL_ENABLED:true}
-    from-address: ${EMAIL_FROM_ADDRESS:noreply@Projectly.example}
+    from-address: ${EMAIL_FROM_ADDRESS:noreply@taskflow.example}
     from-name: ${EMAIL_FROM_NAME:Projectly}
     reset-token-expiry-minutes: 30
     verification-token-expiry-hours: 24
