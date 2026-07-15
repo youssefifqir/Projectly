@@ -1,0 +1,6 @@
+# Temp / lock files — keep these out of postgres init
+~*
+*.tmp
+Thumbs.db
+.DS_Store
+desktop.ini

@@ -1,0 +1,56 @@
+# Development Profile Configuration
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/Projectly_dev
+    username: Projectly_user
+    password: ${DB_PASSWORD:dev123}
+    driver-class-name: org.postgresql.Driver
+
+    # Connection Pool
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      keepalive-time: 300000
+      connection-timeout: 30000
+
+  # JPA
+  jpa:
+    hibernate:
+      # validate: Flyway owns schema changes — Hibernate only checks they match
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: true
+
+  # Flyway
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: false  # Allow schema changes during development
+    clean-disabled: false      # Allow clean in dev for easy resets
+
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASS:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
+      mail.smtp.ssl.trust: ${SMTP_SSL_TRUST:}
+
+app:
+  admin:
+    password: ${ADMIN_PASSWORD:}
+  rate-limit:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    com.example.Projectly: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+

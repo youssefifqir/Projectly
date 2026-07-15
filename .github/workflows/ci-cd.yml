@@ -1,0 +1,111 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main, staging, develop]
+  pull_request:
+    branches: [main, staging, develop]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: $r"{{" github.repository r"}}"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run tests
+        run: mvn clean test
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: $r"{{" env.REGISTRY r"}}"
+          username: $r"{{" github.actor r"}}"
+          password: $r"{{" secrets.GITHUB_TOKEN r"}}"
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: $r"{{" env.REGISTRY r"}}"/$r"{{" env.IMAGE_NAME r"}}"
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=$r"{{" branch r"}}"-
+            type=semver,pattern=$r"{{" version r"}}"
+            type=raw,value=latest,enable=$r"{{" github.ref == 'refs/heads/main' r"}}"
+
+      - name: Build & push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: $r"{{" github.event_name != 'pull_request' r"}}"
+          tags: $r"{{" steps.meta.outputs.tags r"}}"
+          labels: $r"{{" steps.meta.outputs.labels r"}}"
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        if: github.event_name != 'pull_request'
+        with:
+          image-ref: $r"{{" env.REGISTRY r"}}"/$r"{{" env.IMAGE_NAME r"}}":$r"{{" github.sha r"}}"
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: github.event_name != 'pull_request'
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  deploy-dev:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: development
+    steps:
+      - name: Deploy to development
+        run: |
+          echo "Deploying to development environment"
+          # Add your deployment commands here (SSH, kubectl, docker compose, etc.)
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging' && github.event_name == 'push'
+    environment: staging
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment"
+          # Add your deployment commands here
+
+  deploy-prod:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment"
+          # Add your production deployment commands here

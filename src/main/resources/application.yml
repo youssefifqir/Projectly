@@ -1,0 +1,68 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: Projectly
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASS:}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:false}
+      mail.smtp.ssl.trust: ${SMTP_SSL_TRUST:}
+
+# Application Configuration
+app:
+  security:
+    jwt:
+      access-token-expiration: 900000 # 15 minutes in milliseconds
+      refresh-token-expiration: 604800000 # 7 days in milliseconds
+      remember-me-token-expiration: 2592000000 # 30 days in milliseconds
+    disposable-email: 10minutemail,20minutemail,33mail,5ymail,anonbox,guerrillamail,mailinator,maildrop,mailnesia,moakt,my10minutemail,throwawaymail,trashmail,temp-mail,tempmail,truemail,yopmail
+  server:
+    url: ${SERVER_URL:http://localhost:8080}
+  rate-limit:
+    trusted-proxies: 127.0.0.1,0:0:0:0:0:0:0:1
+  admin:
+    email: ${ADMIN_EMAIL:admin@projectly.com}
+    password: ${ADMIN_PASSWORD:Admin@12345!}
+    first-name: Admin
+    last-name: User
+    phone: "+0000000000"
+  email:
+    enabled: ${EMAIL_ENABLED:true}
+    from-address: ${EMAIL_FROM_ADDRESS:noreply@Projectly.example}
+    from-name: ${EMAIL_FROM_NAME:Projectly}
+    reset-token-expiry-minutes: 30
+    verification-token-expiry-hours: 24
+    verify-email-on-register: false
+
+# Spring Boot Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+      enabled: true
+    info:
+      enabled: true
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 10s
+    tags:
+      application: ${spring.application.name}
+
