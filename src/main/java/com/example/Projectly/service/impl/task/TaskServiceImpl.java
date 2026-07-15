@@ -113,7 +113,11 @@ public class TaskServiceImpl implements TaskService {
             }
         }
         // Handle OneToMany relationships - set parent reference
-        if (entity.getComments() != null) {
+        // NOTE: checked for non-empty, not just non-null — the field is always non-null (empty
+        // collection literal in the entity), so a plain != null check here misfires on every
+        // request that never touches this relationship (e.g. converters that only set scalar
+        // fields), wiping/reattaching a collection nothing actually asked to change.
+        if (entity.getComments() != null && !entity.getComments().isEmpty()) {
             entity.getComments().forEach(child -> {
                 if (child != null) {
                     child.setTask(entity);
@@ -226,7 +230,13 @@ public class TaskServiceImpl implements TaskService {
         if (updated.getAssignee() != null) {
             existing.setAssignee(updated.getAssignee());
         }
-        if (updated.getComments() != null) {
+        // NOTE: checked for non-empty, not just non-null — this field is always non-null
+        // (initialized to an empty collection on the entity), so a plain != null check fires on
+        // every update() call, even DTOs/converters that never populate this relationship at
+        // all. That unconditionally clears the real, persisted collection (deleting rows via
+        // orphanRemoval) and, worse, can hand Hibernate a still-transient child with no cascade
+        // configured on the association, throwing TransientObjectException on flush.
+        if (updated.getComments() != null && !updated.getComments().isEmpty()) {
             if (existing.getComments() == null) {
                 existing.setComments(new LinkedHashSet<>());
             } else {
